@@ -16,8 +16,7 @@ Choose one of the options below.
 From the project folder:
 
 ```bash
-chmod +x hueb.py
-sudo ln -sf "$(pwd)/hueb.py" /usr/local/bin/hueb
+curl https://raw.githubusercontent.com/rafaelhueb92/hueb-mac-cli/refs/heads/master/install.sh | bash    
 ```
 
 Now run:
