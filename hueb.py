@@ -6,9 +6,17 @@ import shutil
 import subprocess
 import sys
 
-from models import CleanupTarget
 from pathlib import Path
 from typing import Iterable, List
+
+from dataclasses import dataclass
+
+
+@dataclass
+class CleanupTarget:
+    name: str
+    path: Path
+    enabled: bool = True
 
 
 def run_command(cmd: List[str]) -> str:
