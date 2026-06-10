@@ -41,4 +41,18 @@ python3 hueb.py mac status
 hueb mac --help
 ```
 
-If you used Option 2 (no global ins
+If you used Option 2 (no global install), use:
+
+```bash
+python3 hueb.py mac --help
+```
+
+## Common commands
+
+```bash
+hueb mac status
+hueb mac scan
+hueb mac clean --dry-run
+hueb mac clean --targets user_cache,user_logs
+hueb mac find-clean --path . --names db,venv --dry-run
+```

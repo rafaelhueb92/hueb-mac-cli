@@ -289,9 +289,4 @@ def main() -> int:
         return 0
 
     mac_help = build_parser()
-    mac_help.parse_args(["mac", "-h"])
-    return 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    mac_help
