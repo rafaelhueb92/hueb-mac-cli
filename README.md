@@ -1,8 +1,12 @@
 # Hueb CLI
 
-A small macOS-focused CLI for checking system status and cleaning common temporary folders.
+![macOS](https://img.shields.io/badge/platform-macOS-000000?logo=apple&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+![CLI](https://img.shields.io/badge/type-CLI-5E5CE6)
 
-## Requirements
+A small macOS-focused CLI for checking system status and cleaning common temporary folders. 🧰
+
+## ✅ Requirements
 
 - macOS
 - Python 3.10+
