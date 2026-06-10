@@ -5,16 +5,10 @@ import os
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
+
+from models import CleanupTarget
 from pathlib import Path
 from typing import Iterable, List
-
-
-@dataclass
-class CleanupTarget:
-    name: str
-    path: Path
-    enabled: bool = True
 
 
 def run_command(cmd: List[str]) -> str:
@@ -73,11 +67,16 @@ def default_cleanup_targets() -> List[CleanupTarget]:
         CleanupTarget("user_cache", home / "Library" / "Caches"),
         CleanupTarget("user_logs", home / "Library" / "Logs"),
         CleanupTarget("trash", home / ".Trash"),
-        CleanupTarget("xcode_derived_data", home / "Library" / "Developer" / "Xcode" / "DerivedData"),
+        CleanupTarget(
+            "xcode_derived_data",
+            home / "Library" / "Developer" / "Xcode" / "DerivedData",
+        ),
     ]
 
 
-def parse_targets(raw: str | None, all_targets: Iterable[CleanupTarget]) -> List[CleanupTarget]:
+def parse_targets(
+    raw: str | None, all_targets: Iterable[CleanupTarget]
+) -> List[CleanupTarget]:
     targets = list(all_targets)
     if not raw:
         return targets
@@ -103,7 +102,9 @@ def print_system_status() -> None:
     except ValueError:
         print(f"Total Memory: {mem_line}")
 
-    print(f"Disk Free: {format_bytes(disk_usage.free)} / {format_bytes(disk_usage.total)}")
+    print(
+        f"Disk Free: {format_bytes(disk_usage.free)} / {format_bytes(disk_usage.total)}"
+    )
     print(f"Uptime: {uptime}")
     print("vm_stat:")
     print(vm_stat)
@@ -199,5 +200,90 @@ def clean_found_folders(base_path: Path, names: set[str], dry_run: bool) -> None
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="hueb", description="Hueb Mac optimization CLI")
-    root_
+    parser = argparse.ArgumentParser(
+        prog="hueb", description="Hueb Mac optimization CLI"
+    )
+    root_sub = parser.add_subparsers(dest="command")
+
+    mac = root_sub.add_parser("mac", help="Mac optimization tools")
+    mac_sub = mac.add_subparsers(dest="mac_command")
+
+    mac_sub.add_parser("status", help="Show memory, disk and process status")
+    mac_sub.add_parser("scan", help="Scan reclaimable storage from known targets")
+
+    clean = mac_sub.add_parser("clean", help="Cleanup known temporary targets")
+    clean.add_argument(
+        "--targets",
+        type=str,
+        default=None,
+        help="Comma-separated target names. Available: user_cache,user_logs,trash,xcode_derived_data",
+    )
+    clean.add_argument(
+        "--dry-run", action="store_true", help="Only calculate what would be removed"
+    )
+
+    find_clean = mac_sub.add_parser(
+        "find-clean", help="Find and optionally delete folders by name"
+    )
+    find_clean.add_argument(
+        "--path",
+        type=str,
+        default=".",
+        help="Base path to search recursively",
+    )
+    find_clean.add_argument(
+        "--names",
+        type=str,
+        default="db,venv",
+        help="Comma-separated folder names to search for",
+    )
+    find_clean.add_argument(
+        "--dry-run", action="store_true", help="Only show matching folders"
+    )
+
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if args.command != "mac":
+        parser.print_help()
+        return 1
+
+    targets = default_cleanup_targets()
+
+    if args.mac_command == "status":
+        print_system_status()
+        return 0
+
+    if args.mac_command == "scan":
+        scan_cleanup(targets)
+        return 0
+
+    if args.mac_command == "clean":
+        try:
+            selected = parse_targets(args.targets, targets)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        execute_cleanup(selected, dry_run=args.dry_run)
+        return 0
+
+    if args.mac_command == "find-clean":
+        base_path = Path(args.path).expanduser().resolve()
+        names = {name.strip() for name in args.names.split(",") if name.strip()}
+        if not names:
+            print("No folder names provided", file=sys.stderr)
+            return 2
+        clean_found_folders(base_path, names, dry_run=args.dry_run)
+        return 0
+
+    mac_help = build_parser()
+    mac_help.parse_args(["mac", "-h"])
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
